@@ -20,32 +20,18 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import { useState } from "react";
 import Grid from "@mui/material/Grid2";
 import TextField from "@mui/material/TextField";
-import { Height } from "@mui/icons-material";
-import { minHeight } from "@mui/system";
 
 //MOCK DATA
-const products = [
-  {
-    _id: 1,
-    name: "Bag 1",
-    price: 100,
-    qty: 10,
-    sku: "123456",
-    description: "This is a bag",
-  },
-];
-
-const validationSchema = Yup.object().shape({
-  name: Yup.string().required("Name is required"),
-  price: Yup.number()
-    .required("Price is required")
-    .positive("Price must be positive."),
-  qty: Yup.number().required("Quantity is required"),
-  sku: Yup.string().required("SKU is required"),
-  description: Yup.string().required("Description is required"),
-});
-
 export default function Products() {
+  const validationSchema = Yup.object().shape({
+    name: Yup.string().required("Name is required"),
+    price: Yup.number()
+      .required("Price is required")
+      .positive("Price must be positive."),
+    qty: Yup.number().required("Quantity is required"),
+    sku: Yup.string().required("SKU is required"),
+    description: Yup.string().required("Description is required"),
+  });
   const [open, setOpen] = useState(false);
 
   const [initialValues, setInitialValues] = useState({
@@ -56,6 +42,18 @@ export default function Products() {
     sku: "",
     description: "",
   });
+
+  const [products, setProducts] = useState([
+    {
+      _id: 1,
+      name: "Bag 1",
+      price: 100,
+      qty: 10,
+      sku: "123456",
+      description: "This is a bag",
+    },
+  ]);
+
   const handleAddProduct = () => {
     setInitialValues({
       _id: -1,
@@ -80,17 +78,32 @@ export default function Products() {
     setOpen(true);
   };
 
-  const handleDeleteProduct = (product) => {
-    console.log("edit", product);
+  const handleDeleteProduct = (productToDelete) => {
+    const filteredProducts = products.filter(
+      (product) => product._id !== productToDelete._id
+    );
+    setProducts(filteredProducts);
   };
 
-  const handleSubmit = (values) => {
-    // Get the highest _id from the products array
-    const maxId = Math.max(...products.map((product) => product._id), 0);
-    values._id = maxId + 1;
+  const handleSubmit = (values, { resetForm }) => {
+    if (values._id === -1) {
+      // Create new product
+      const newProduct = {
+        ...values,
+        _id:
+          products.length > 0 ? Math.max(...products.map((p) => p._id)) + 1 : 1,
+      };
+      setProducts([...products, newProduct]);
+    } else {
+      // Update existing product
+      const updatedProducts = products.map((product) =>
+        product._id === values._id ? values : product
+      );
+      setProducts(updatedProducts);
+    }
 
-    products.push(values);
     setOpen(false);
+    resetForm();
   };
 
   return (
